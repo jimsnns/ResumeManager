@@ -153,5 +153,23 @@ namespace ResumeManager.Controllers
         {
             return _context.Degrees.Any(e => e.Id == id);
         }
+
+        public async Task<IActionResult> CleanUnused()
+        {
+            var usedDegreeIds = _context.Candidates
+                                        .Where(c => c.DegreeId.HasValue)
+                                        .Select(c => c.DegreeId.Value)
+                                        .ToList();
+
+            var unusedDegrees = _context.Degrees
+                                        .Where(d => !usedDegreeIds.Contains(d.Id))
+                                        .ToList();
+
+            _context.Degrees.RemoveRange(unusedDegrees);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
+        }
+
     }
 }
