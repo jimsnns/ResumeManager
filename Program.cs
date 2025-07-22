@@ -1,7 +1,14 @@
+using ResumeManager.Data;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+/* Register the DbContext with an in-memory database */
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseInMemoryDatabase("ResumeManagerDb"));
 
 var app = builder.Build();
 
