@@ -1,5 +1,6 @@
-using ResumeManager.Data;
 using Microsoft.EntityFrameworkCore;
+using ResumeManager.Data;
+using ResumeManager.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,12 +26,27 @@ app.UseRouting();
 
 app.UseAuthorization();
 
-app.MapStaticAssets();
+app.UseStaticFiles();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    if (!context.Degrees.Any())
+    {
+        context.Degrees.AddRange(
+            new Degree { Name = "BSc" },
+            new Degree { Name = "MSc" },
+            new Degree { Name = "PhD" }
+        );
+
+        context.SaveChanges();
+    }
+}
 
 
 app.Run();
