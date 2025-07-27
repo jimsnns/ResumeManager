@@ -55,7 +55,11 @@
 </div>
 
 <div>
-    <a asp-action="Index">Back to List</a>
+    <form asp-action="Index" asp-controller="Candidates">
+        <button type="submit" class="btn btn-secondary">
+            <i class="bi bi-arrow-left-circle"></i> Back to List
+        </button>
+    </form>
 </div>
 
 @section Scripts {
