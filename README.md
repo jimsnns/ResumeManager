@@ -69,5 +69,5 @@ Uploaded CVs are stored under:
 Make sure the folder exists or is created at runtime.
 
 ## 👤 Author
-Developed by Dimitris Sinanis
+Developed by Dimitris Sinanis ||
 Full Stack Software Engineer
