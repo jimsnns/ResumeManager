@@ -3,6 +3,10 @@
 @{
     ViewData["Title"] = "Edit";
 }
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success">@TempData["Message"]</div>
+}
 
 <h1>Edit Candidate</h1>
 
@@ -46,9 +50,15 @@
 
             @if (!string.IsNullOrEmpty(Model.CvFilePath))
             {
-                <div class="mt-2">
-                    <strong>Existing File:</strong>
-                    <a href="@Model.CvFilePath" target="_blank"> View CV</a>
+                <div class="mb-2">
+                    <a class="btn btn-sm btn-outline-primary" href="@Model.CvFilePath" target="_blank">View CV</a>
+                    <form asp-controller="Candidates" asp-action="DeleteCv" method="post" class="d-inline">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <button type="submit" class="btn btn-sm btn-danger"
+                                onclick="return confirm('Are you sure you want to delete?')">
+                            Delete CV
+                        </button>
+                    </form>
                 </div>
             }
             <div class="form-group">
@@ -64,7 +74,11 @@
 </div>
 
 <div>
-    <a asp-action="Index">Back to List</a>
+    <form asp-action="Index" asp-controller="Candidates">
+        <button type="submit" class="btn btn-secondary">
+            <i class="bi bi-arrow-left-circle"></i> Back to List
+        </button>
+    </form>
 </div>
 
 @section Scripts {

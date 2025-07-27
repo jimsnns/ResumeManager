@@ -68,6 +68,16 @@
             </form>
         </div>
     }
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    <div>
+        <form asp-action="Edit" asp-route-id="@Model?.Id">
+            <button type="submit" class="btn btn-primary">
+                Edit
+            </button>
+        </form>
+        <form asp-action="Index" asp-controller="Candidates">
+            <button type="submit" class="btn btn-secondary">
+                <i class="bi bi-arrow-left-circle"></i> Back to List
+            </button>
+        </form>
+    </div>
 </div>
