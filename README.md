@@ -58,7 +58,7 @@ Run with F5 or via the terminal:
 ```bash
 dotnet run
 ```
-- The app will launch on https://localhost:'<port>'
+- The app will launch on https://localhost:
 
 ## 📂 CV Upload Folder
 
