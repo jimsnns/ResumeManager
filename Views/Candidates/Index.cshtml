@@ -54,9 +54,16 @@
             <td>
                 @Html.DisplayFor(modelItem => item.Degree.Name)
             </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CvFilePath)
-            </td>
+                <td>
+                    @if (!string.IsNullOrEmpty(item.CvFilePath))
+                    {
+                        <a href="@item.CvFilePath" target="_blank">View CV</a>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Has not been uploaded</span>
+                    }
+                </td>
             <td>
                 @Html.DisplayFor(modelItem => item.CreationTime)
             </td>

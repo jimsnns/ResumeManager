@@ -57,10 +57,25 @@ namespace ResumeManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,LastName,FirstName,Email,Mobile,DegreeId,CvFilePath,CreationTime")] Candidate candidate)
+        public async Task<IActionResult> Create(Candidate candidate, IFormFile? CvUpload)
         {
             if (ModelState.IsValid)
             {
+                if (CvUpload != null && CvUpload.Length > 0)
+                {
+                    var fileName = Path.GetFileName(CvUpload.FileName);
+                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+                    var uniqueFileName = Guid.NewGuid().ToString() + "_" + fileName;
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await CvUpload.CopyToAsync(stream);
+                    }
+
+                    candidate.CvFilePath = "/uploads/" + uniqueFileName;
+                }
+
                 _context.Add(candidate);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -91,7 +106,7 @@ namespace ResumeManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,LastName,FirstName,Email,Mobile,DegreeId,CvFilePath,CreationTime")] Candidate candidate)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,LastName,FirstName,Email,Mobile,DegreeId,CvFilePath,CreationTime")] Candidate candidate, IFormFile? CvUpload)
         {
             if (id != candidate.Id)
             {
@@ -102,6 +117,20 @@ namespace ResumeManager.Controllers
             {
                 try
                 {
+                    if (CvUpload != null && CvUpload.Length > 0)
+                    {
+                        var fileName = Path.GetFileName(CvUpload.FileName);
+                        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+                        var uniqueFileName = Guid.NewGuid().ToString() + "_" + fileName;
+                        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await CvUpload.CopyToAsync(stream);
+                        }
+
+                        candidate.CvFilePath = "/uploads/" + uniqueFileName;
+                    }
                     _context.Update(candidate);
                     await _context.SaveChangesAsync();
                 }
@@ -155,6 +184,32 @@ namespace ResumeManager.Controllers
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
+
+        [HttpPost, ActionName("DeleteCv")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteCv(int id)
+        {
+            var candidate = await _context.Candidates.FindAsync(id);
+            if (candidate == null || string.IsNullOrEmpty(candidate.CvFilePath))
+            {
+                return RedirectToAction(nameof(Index));
+            }
+
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", candidate.CvFilePath.TrimStart('/'));
+
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
+
+            candidate.CvFilePath = null;
+            _context.Update(candidate);
+            await _context.SaveChangesAsync();
+
+            TempData["Message"] = "The CV file deleted successfully.";
+            return RedirectToAction(nameof(Edit), new { id = candidate.Id });
+        }
+
 
         private bool CandidateExists(int id)
         {

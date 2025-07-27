@@ -54,6 +54,20 @@
     </dl>
 </div>
 <div>
+    @if (!string.IsNullOrEmpty(Model.CvFilePath))
+    {
+        <div class="mb-2">
+            <a class="btn btn-sm btn-outline-primary" href="@Model.CvFilePath" target="_blank">View CV</a>
+
+            <form asp-action="DeleteCv" method="post" class="d-inline">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-sm btn-danger"
+                        onclick="return confirm('Are you sure you want to delete?')">
+                    Delete CV
+                </button>
+            </form>
+        </div>
+    }
     <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
     <a asp-action="Index">Back to List</a>
 </div>
