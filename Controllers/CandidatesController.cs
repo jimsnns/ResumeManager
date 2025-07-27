@@ -185,7 +185,7 @@ namespace ResumeManager.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [HttpPost, ActionName("DeleteCv")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteCv(int id)
         {
