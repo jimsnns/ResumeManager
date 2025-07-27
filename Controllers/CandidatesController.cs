@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.Blazor;
 using ResumeManager.Data;
 using ResumeManager.Models;
 
@@ -106,49 +107,68 @@ namespace ResumeManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,LastName,FirstName,Email,Mobile,DegreeId,CvFilePath,CreationTime")] Candidate candidate, IFormFile? CvUpload)
+        public async Task<IActionResult> Edit(int id, Candidate candidate, IFormFile? CvUpload)
         {
+            // Clear any messages that shouldn't appear on edit page
+            TempData.Clear();
+
             if (id != candidate.Id)
             {
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                try
-                {
-                    if (CvUpload != null && CvUpload.Length > 0)
-                    {
-                        var fileName = Path.GetFileName(CvUpload.FileName);
-                        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-                        var uniqueFileName = Guid.NewGuid().ToString() + "_" + fileName;
-                        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                        using (var stream = new FileStream(filePath, FileMode.Create))
-                        {
-                            await CvUpload.CopyToAsync(stream);
-                        }
-
-                        candidate.CvFilePath = "/uploads/" + uniqueFileName;
-                    }
-                    _context.Update(candidate);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!CandidateExists(candidate.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                ViewData["DegreeId"] = new SelectList(_context.Degrees, "Id", "Name", candidate.DegreeId);
+                return View(candidate);
             }
-            ViewData["DegreeId"] = new SelectList(_context.Degrees, "Id", "Name", candidate.DegreeId);
-            return View(candidate);
+
+            var existingCandidate = await _context.Candidates.FindAsync(id);
+            if (existingCandidate == null)
+            {
+                return NotFound();
+            }
+
+            // Update fields
+            existingCandidate.FirstName = candidate.FirstName;
+            existingCandidate.LastName = candidate.LastName;
+            existingCandidate.Email = candidate.Email;
+            existingCandidate.Mobile = candidate.Mobile;
+            existingCandidate.DegreeId = candidate.DegreeId;
+            existingCandidate.CreationTime = candidate.CreationTime;
+
+            // Handle file upload
+            if (CvUpload != null && CvUpload.Length > 0)
+            {
+                var fileName = Path.GetFileName(CvUpload.FileName);
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+                Directory.CreateDirectory(uploadsFolder); // Make sure folder exists
+                var uniqueFileName = Guid.NewGuid().ToString() + "_" + fileName;
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await CvUpload.CopyToAsync(stream);
+                }
+
+                // Optionally delete old file
+                if (!string.IsNullOrEmpty(existingCandidate.CvFilePath))
+                {
+                    var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", existingCandidate.CvFilePath.TrimStart('/'));
+                    if (System.IO.File.Exists(oldFilePath))
+                    {
+                        System.IO.File.Delete(oldFilePath);
+                    }
+                }
+
+                existingCandidate.CvFilePath ="/uploads/" + uniqueFileName;
+            }
+
+              await _context.SaveChangesAsync();
+              TempData["Message"] = "Candidate updated successfully.";
+            
+
+            return RedirectToAction(nameof(Index), new { id = candidate.Id });
         }
 
         // GET: Candidates/Delete/5
@@ -187,7 +207,7 @@ namespace ResumeManager.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteCv(int id)
+        public async Task<IActionResult> DeleteCv(int id, string returnUrl)
         {
             var candidate = await _context.Candidates.FindAsync(id);
             if (candidate == null || string.IsNullOrEmpty(candidate.CvFilePath))
@@ -206,9 +226,16 @@ namespace ResumeManager.Controllers
             _context.Update(candidate);
             await _context.SaveChangesAsync();
 
-            TempData["Message"] = "The CV file deleted successfully.";
-            return RedirectToAction(nameof(Edit), new { id = candidate.Id });
+            TempData["DeleteMessage"] = "The CV file deleted successfully.";
+
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+
+            return RedirectToAction(nameof(Index), new { id = candidate.Id });
         }
+
 
 
         private bool CandidateExists(int id)
