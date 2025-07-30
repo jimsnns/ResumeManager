@@ -1,6 +1,6 @@
 # Resume Manager – ASP.NET Core MVC Project
 
-This is a sample resume management application built with **ASP.NET Core 8.0 MVC** and **Entity Framework Core In-Memory database**, created as part of a technical evaluation for Byte Computer.
+This is a sample resume management application built with **ASP.NET Core 8.0 MVC** and **Entity Framework Core In-Memory database**.
 
 ---
 
